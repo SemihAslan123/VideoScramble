@@ -1,136 +1,141 @@
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
+import java.io.File;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.embed.swing.SwingFXUtils;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfByte;
-import org.opencv.imgcodecs.Imgcodecs;
-import org.opencv.videoio.VideoCapture;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.stage.FileChooser;
 
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
+import org.opencv.videoio.VideoCapture;
 
-public class VideoGrabDemoController
-{
+/**
+ * Ce travail a été réalisé par Semih Aslan et Nourath Affo.
+ * S5-B2
+ *
+ * @author <a href="mailto:semihaslan2210@gmail.com">Semih Aslan</a>
+ * @author <a href="mailto:nouraffo08@gmail.com">Nourath Affo</a>
+ *
+ */
+public class VideoGrabDemoController {
     @FXML
-    private Button button;
+    private Button btnOpen;
     @FXML
-    private ImageView currentFrame;
-
-    // a timer for acquiring the video stream
+    private ImageView imageViewSource;
     private ScheduledExecutorService timer;
-    // the OpenCV object that realizes the video capture
     private VideoCapture capture = new VideoCapture();
-    // a flag to change the button behavior
     private boolean cameraActive = false;
-    // the id of the camera to be used
-    // when using apple OS with an associated iphone nearby, 0 will be iphone's cam
-    private static int cameraId = 0;
 
     @FXML
-    protected void startCamera(ActionEvent event)
-    {
-
-        if (!this.cameraActive)
-        {
-            this.capture.open(cameraId);
-
-            if (this.capture.isOpened())
-            {
-                this.cameraActive = true;
-
-                // grab a frame every 33 ms (30 frames/sec)
-                Runnable frameGrabber = new Runnable() {
-
-                    @Override
-                    public void run()
-                    {
-                        Mat frame = grabFrame();
-                        Image imageToShow = mat2Image(frame);
-                        updateImageView(currentFrame, imageToShow);
-                        currentFrame.setFitWidth(800);
-                        currentFrame.setPreserveRatio(true);
-
-                    }
-                };
-
-                this.timer = Executors.newSingleThreadScheduledExecutor();
-                this.timer.scheduleAtFixedRate(frameGrabber, 0, 33, TimeUnit.MILLISECONDS);
-
-                this.button.setText("Stop Camera");
-            }
-            else
-            {
-                System.err.println("Impossible to open the camera connection...");
-            }
-        }
-        else
-        {
-            this.cameraActive = false;
-            this.button.setText("Start Camera");
-
-            this.stopAcquisition();
+    public void initialize() {
+        // action du bouton "Ouvrir vidéo"
+        if (btnOpen != null) {
+            btnOpen.setOnAction(this::handleOpenVideo);
         }
     }
 
-    private Mat grabFrame()
-    {
+    private void handleOpenVideo(ActionEvent event) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Sélectionner une vidéo");
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Fichiers Vidéo", "*.mp4", "*.avi", "*.mkv", "*.m4v", "*.mov"),
+                new FileChooser.ExtensionFilter("Tous les fichiers", "*.*")
+        );
+
+        File selectedFile = fileChooser.showOpenDialog(btnOpen.getScene().getWindow());
+
+        if (selectedFile != null) {
+            startVideo(selectedFile.getAbsolutePath());
+        }
+    }
+
+    public void startVideo(String videoPath) {
+        stopAcquisition();
+        this.capture.open(videoPath);
+
+        if (this.capture.isOpened()) {
+            // lecture de la vidéo sélectionne
+            Runnable frameGrabber = new Runnable() {
+                @Override
+                public void run() {
+                    // On récupère une image
+                    Mat frame = grabFrame();
+
+                    // y'a t-il une prochaine image ?
+                    if (!frame.empty()) {
+                        // Conversion et affichage
+                        Image imageToShow = mat2Image(frame);
+                        updateImageView(imageViewSource, imageToShow);
+                    }
+                    else {
+                        // Fin de la vidéo : on arrête le moteur
+                        stopAcquisition();
+                        System.out.println("Fin de la vidéo.");
+                    }
+                }
+            };
+
+            // démarrage du chrono, toute les 33 secondes.
+            this.timer = Executors.newSingleThreadScheduledExecutor();
+            this.timer.scheduleAtFixedRate(frameGrabber, 0, 33, TimeUnit.MILLISECONDS);
+        } else {
+            System.err.println("Impossible d'ouvrir le fichier vidéo : " + videoPath);
+        }
+    }
+
+    private Mat grabFrame() {
         Mat frame = new Mat();
 
-        if (this.capture.isOpened())
-        {
-            try
-            {
+        if (this.capture.isOpened()) {
+            try {
                 this.capture.read(frame);
-                if (!frame.empty()) { }
+                if (!frame.empty()) {
+                    // basic single frame processing can be performed here
+                }
 
             }
-            catch (Exception e)
-            {
-                System.err.println("Exception during the image elaboration: " + e);
+            catch (Exception e) {
+                System.err.println("Exception lors de la lecture de l'image :" + e);
             }
         }
-
         return frame;
     }
 
-    private void stopAcquisition()
-    {
-        if (this.timer!=null && !this.timer.isShutdown())
-        {
-            try
-            {
+
+    private void stopAcquisition() {
+        if (this.timer!=null && !this.timer.isShutdown()) {
+            try {
                 this.timer.shutdown();
                 this.timer.awaitTermination(33, TimeUnit.MILLISECONDS);
             }
-            catch (InterruptedException e)
-            {
-                System.err.println("Exception in stopping the frame capture, trying to release the camera now... " + e);
+            catch (InterruptedException e) {
+                System.err.println("Erreur lors de l'arrêt du timer :" + e);
             }
         }
 
-        if (this.capture.isOpened())
-        {
-            // release the camera
+        if (this.capture.isOpened()) {
             this.capture.release();
         }
     }
 
-    private void updateImageView(ImageView view, Image image)
-    {
+
+    private void updateImageView(ImageView view, Image image) {
         onFXThread(view.imageProperty(), image);
     }
 
-
-    protected void setClosed()
-    {
+    protected void setClosed() {
         this.stopAcquisition();
     }
 
@@ -140,33 +145,26 @@ public class VideoGrabDemoController
         return new Image(new java.io.ByteArrayInputStream(buffer.toArray()));
     }
 
-    public static Image mat2Image(Mat frame)
-    {
-        try
-        {
+
+    public static Image mat2Image(Mat frame) {
+        try {
             return SwingFXUtils.toFXImage(matToBufferedImage(frame), null);
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             System.err.println("Cannot convert the Mat obejct: " + e);
             return null;
         }
     }
 
-    private static BufferedImage matToBufferedImage(Mat original)
-    {
-        // init
+    private static BufferedImage matToBufferedImage(Mat original) {
         BufferedImage image = null;
         int width = original.width(), height = original.height(), channels = original.channels();
         byte[] sourcePixels = new byte[width * height * channels];
         original.get(0, 0, sourcePixels);
 
-        if (original.channels() > 1)
-        {
+        if (original.channels() > 1) {
             image = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
-        }
-        else
-        {
+        } else {
             image = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
         }
         final byte[] targetPixels = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
@@ -175,8 +173,7 @@ public class VideoGrabDemoController
         return image;
     }
 
-    public static <T> void onFXThread(final ObjectProperty<T> property, final T value)
-    {
+    public static <T> void onFXThread(final ObjectProperty<T> property, final T value) {
         Platform.runLater(() -> {
             property.set(value);
         });

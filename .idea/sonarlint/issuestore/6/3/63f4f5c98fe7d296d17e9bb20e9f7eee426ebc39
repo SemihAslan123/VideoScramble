@@ -1,16 +1,20 @@
 
 J
-java:S16042"(Make this anonymous inner class a lambda(²Ğğ˜şÿÿÿÿ8·—‡Ú«3
-L	java:S106G"+Replace this use of System.err by a logger.(ÁĞŠöüÿÿÿÿ8Ø—‡Ú«3
-E	java:S108\")Either remove or fill this block of code.(½ò«˜8Û—‡Ú«3
-L	java:S106a"+Replace this use of System.err by a logger.(â×ã„ÿÿÿÿÿ8Ü—‡Ú«3
+java:S1604F"(Make this anonymous inner class a lambda(²Ğğ˜şÿÿÿÿ8–½û­3
+G	java:S106U"+Replace this use of System.out by a logger.(ÇÄ¹ş8¦–½û­3
+G	java:S106^"+Replace this use of System.err by a logger.(ÀÓ÷8Î—Ûú­3
+G	java:S106n"+Replace this use of System.err by a logger.(«‰ˆ¶8Ï—Ûú­3
 €
-java:S2142q"^Either re-interrupt this method or rethrow the "InterruptedException" that can be caught here.(ÇâŞáøÿÿÿÿ8İ—‡Ú«3
-G	java:S106s"+Replace this use of System.err by a logger.(’Àßº8İ—‡Ú«3
-M	java:S106—"+Replace this use of System.err by a logger.(ãŸ©èıÿÿÿÿ8á—‡Ú«3
+java:S2142{"^Either re-interrupt this method or rethrow the "InterruptedException" that can be caught here.(²ı…¦ûÿÿÿÿ8Ï—Ûú­3
+L	java:S106|"+Replace this use of System.err by a logger.(úÕÛ…şÿÿÿÿ8Ó—Ûú­3
+M	java:S106š"+Replace this use of System.err by a logger.(ãŸ©èıÿÿÿÿ8÷×ëú­3
 a
-java:S1659 "CDeclare "height" and all following declarations on a separate line.(·†¼Ó8â—‡Ú«3
+java:S1659¡"CDeclare "height" and all following declarations on a separate line.(·†¼Ó8Ó—Ûú­3
 J
-java:S1602´",Remove useless curly braces around statement(ÃÉş©8å—‡Ú«3
+java:S1602±",Remove useless curly braces around statement(ÃÉş©8Ö—Ûú­3
+T
+java:S1128"7Remove this unused import 'org.opencv.imgproc.Imgproc'.(ââ®Ç8©šçú­3
+R
+java:S1068'"0Remove this unused "cameraActive" private field.(áëØíşÿÿÿÿ8Ö—Ûú­3
 S
-java:S1144‰"5Remove this unused private "matToJavaFXImage" method.(ï’ıÊ8æ—‡Ú«3
+java:S1144"5Remove this unused private "matToJavaFXImage" method.(ï’ıÊ8Ö—Ûú­3

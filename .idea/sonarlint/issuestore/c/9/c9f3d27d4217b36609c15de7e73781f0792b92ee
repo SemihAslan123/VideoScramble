@@ -1,4 +1,19 @@
 
 J
-java:S1604$"(Make this anonymous inner class a lambda(”¢ö‰úÿÿÿÿ8¿“†Ú«3
-X	java:S125"<This block of commented-out lines of code should be removed.(í¡¥‰8Å“†Ú«3
+java:S16041"(Make this anonymous inner class a lambda(”¢ö‰úÿÿÿÿ8ÔäØù­3
+W
+java:S1128"5Remove this unused import 'javafx.event.ActionEvent'.(î•¯¼ýÿÿÿÿ8óäØù­3
+R
+java:S1128"5Remove this unused import 'javafx.scene.image.Image'.(‰¿½Ç8óäØù­3
+[
+java:S1128"9Remove this unused import 'javafx.scene.image.ImageView'.(áÿ®Ãüÿÿÿÿ8óäØù­3
+W
+java:S1128":Remove this unused import 'javafx.scene.layout.StackPane'.(™÷èò8óäØù­3
+L
+java:S1128"0Remove this unused import 'org.opencv.core.Mat'.(Ÿ â8ôäØù­3
+S
+java:S1128"6Remove this unused import 'org.opencv.core.MatOfByte'.(“¥¤8ôäØù­3
+]
+java:S1128";Remove this unused import 'org.opencv.imgcodecs.Imgcodecs'.(¥è¶îþÿÿÿÿ8ôäØù­3
+Y
+java:S1128"<Remove this unused import 'org.opencv.videoio.VideoCapture'.(‡¹Àä8ôäØù­3
