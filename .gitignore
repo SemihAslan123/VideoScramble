@@ -1,5 +1,6 @@
 ### IntelliJ IDEA ###
 out/
+output/
 !**/src/main/**/out/
 !**/src/test/**/out/
 
@@ -23,7 +24,11 @@ bin/
 /.nb-gradle/
 
 ### VS Code ###
+.idea/
 .vscode/
+
+target/
+build/
 
 ### Mac OS ###
 .DS_Store
