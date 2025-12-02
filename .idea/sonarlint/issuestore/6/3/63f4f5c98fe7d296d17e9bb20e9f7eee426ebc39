@@ -1,0 +1,16 @@
+
+J
+java:S16042"(Make this anonymous inner class a lambda(²Ðð˜þÿÿÿÿ8·—‡Ú«3
+L	java:S106G"+Replace this use of System.err by a logger.(ÁÐŠöüÿÿÿÿ8Ø—‡Ú«3
+E	java:S108\")Either remove or fill this block of code.(½ò«˜8Û—‡Ú«3
+L	java:S106a"+Replace this use of System.err by a logger.(â×ã„ÿÿÿÿÿ8Ü—‡Ú«3
+€
+java:S2142q"^Either re-interrupt this method or rethrow the "InterruptedException" that can be caught here.(ÇâÞáøÿÿÿÿ8Ý—‡Ú«3
+G	java:S106s"+Replace this use of System.err by a logger.(’Àßº8Ý—‡Ú«3
+M	java:S106—"+Replace this use of System.err by a logger.(ãŸ©èýÿÿÿÿ8á—‡Ú«3
+a
+java:S1659 "CDeclare "height" and all following declarations on a separate line.(·†¼Ó8â—‡Ú«3
+J
+java:S1602´",Remove useless curly braces around statement(ÃÉþ©8å—‡Ú«3
+S
+java:S1144‰"5Remove this unused private "matToJavaFXImage" method.(ï’ýÊ8æ—‡Ú«3
