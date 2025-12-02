@@ -70,7 +70,7 @@ public class VideoGrabDemoController {
             Runnable frameGrabber = new Runnable() {
                 @Override
                 public void run() {
-                    // On récupère une image
+                    // on récupère l'image
                     Mat frame = grabFrame();
 
                     // y'a t-il une prochaine image ?
@@ -88,6 +88,7 @@ public class VideoGrabDemoController {
             };
 
             // démarrage du chrono, toute les 33 secondes.
+            // on a environ un flux vidéo d'environ 30 images par seconde.
             this.timer = Executors.newSingleThreadScheduledExecutor();
             this.timer.scheduleAtFixedRate(frameGrabber, 0, 33, TimeUnit.MILLISECONDS);
         } else {
