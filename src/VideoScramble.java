@@ -1,5 +1,14 @@
 import org.opencv.core.Mat;
 
+
+/**
+ * Ce travail a été réalisé par Semih Aslan et Nourath Affo.
+ * S5-B2
+ *
+ * @author <a href="mailto:semihaslan2210@gmail.com">Semih Aslan</a>
+ * @author <a href="mailto:nouraffo08@gmail.com">Nourath Affo</a>
+ *
+ */
 public class VideoScramble {
 
 
