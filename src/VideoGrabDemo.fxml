@@ -16,17 +16,17 @@
     <top>
         <ToolBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
             <items>
-                <Button fx:id="btnOpen" mnemonicParsing="false" text="Ouvrir Vidéo" />
+                <Button fx:id="btnOuvrirFichier" mnemonicParsing="false" text="Ouvrir Vidéo" />
                 <Separator orientation="VERTICAL" />
 
                 <Label text="Clé R :" />
-                <TextField fx:id="txtKeyR" prefWidth="50.0" promptText="0-255" />
+                <TextField fx:id="txtR" prefWidth="50.0" promptText="0-255" />
                 <Label text="Clé S :" />
-                <TextField fx:id="txtKeyS" prefWidth="50.0" promptText="0-127" />
+                <TextField fx:id="txtS" prefWidth="50.0" promptText="0-127" />
                 <Separator orientation="VERTICAL" />
 
-                <Button fx:id="btnScramble" mnemonicParsing="false" text="Mélanger (Chiffrer)" />
-                <Button fx:id="btnUnscramble" mnemonicParsing="false" text="Démélanger (Déchiffrer)" />
+                <Button fx:id="btnMelanger" mnemonicParsing="false" text="Mélanger (Chiffrer)" />
+                <Button fx:id="btnDemelanger" mnemonicParsing="false" text="Démélanger (Déchiffrer)" />
                 <Separator orientation="VERTICAL" />
 
                 <Button fx:id="btnBruteForce" mnemonicParsing="false" style="-fx-base: #ffcccc;" text="Force Brute" textFill="#b22222" />
@@ -58,7 +58,7 @@
                                 <Font name="System Bold" size="14.0" />
                             </font>
                         </Label>
-                        <ImageView fx:id="imageViewDest" fitHeight="360.0" fitWidth="420.0" pickOnBounds="true" preserveRatio="true" style="-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 10, 0, 0, 0);" />
+                        <ImageView fx:id="imageViewResultat" fitHeight="360.0" fitWidth="420.0" pickOnBounds="true" preserveRatio="true" style="-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 10, 0, 0, 0);" />
                     </children>
                 </VBox>
             </children>
