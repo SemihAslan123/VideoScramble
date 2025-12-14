@@ -28,8 +28,6 @@ public class VideoScramble {
             // bloc suivant
             currentY += blockSize;
             remainingHeight -= blockSize;
-
-            System.out.println("Traitement d'un bloc de taille " + blockSize + " à partir de la ligne " + currentY);
         }
     }
 
@@ -55,8 +53,6 @@ public class VideoScramble {
                 Mat srcRow = input.row(srcRowIdx);
                 Mat destRow = output.row(destRowIdx);
                 srcRow.copyTo(destRow);
-
-                System.out.println("Ligne " + srcRowIdx + " déplacée vers " + destRowIdx);
             }
         } else {
             // déchiffrement
@@ -67,9 +63,44 @@ public class VideoScramble {
                 Mat srcRow = input.row(srcRowIdx);
                 Mat destRow = output.row(destRowIdx);
                 srcRow.copyTo(destRow);
-
-                System.out.println("Ligne " + srcRowIdx + " déplacée vers " + destRowIdx);
             }
         }
+    }
+
+    /**
+     * Calcule un score de "désordre" pour l'image.
+     * Utilise la distance euclidienne STANDARD (telle que définie dans la formule).
+     * d(x,y) = (somme((xi - yi)^2))^(1/2)
+     */
+    public static double calculateScore(Mat image) {
+        int rows = image.rows();
+        int cols = image.cols();
+        int channels = image.channels();
+        
+        int totalBytes = (int) (image.total() * image.elemSize());
+        byte[] buffer = new byte[totalBytes];
+        image.get(0, 0, buffer);
+
+        double totalScore = 0;
+        int stride = cols * channels;
+
+        // Calcul de la distance euclidienne entre lignes consécutives
+        for (int i = 0; i < rows - 1; i++) {
+            double lineDistanceSq = 0;
+            int currentRowStart = i * stride;
+            int nextRowStart = (i + 1) * stride;
+            
+            for (int j = 0; j < stride; j++) {
+                int val1 = buffer[currentRowStart + j] & 0xFF;
+                int val2 = buffer[nextRowStart + j] & 0xFF;
+                
+                double diff = val1 - val2;
+                lineDistanceSq += diff * diff;
+            }
+            // Racine carrée (puissance 1/2)
+            totalScore += Math.sqrt(lineDistanceSq);
+        }
+
+        return totalScore;
     }
 }

@@ -1,9 +1,6 @@
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -14,15 +11,16 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.FileChooser;
 
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfByte;
-import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.core.Size;
 import org.opencv.videoio.VideoCapture;
+import org.opencv.videoio.VideoWriter;
 
 /**
  * Ce travail a été réalisé par Semih Aslan et Nourath Affo.
@@ -36,13 +34,25 @@ public class VideoGrabDemoController {
     @FXML private Button btnOuvrirFichier;
     @FXML private Button btnMelanger;
     @FXML private Button btnDemelanger;
+    @FXML private Button btnTelecharger;
+    @FXML private Button btnBruteForce;
     @FXML private TextField txtR;
     @FXML private TextField txtS;
+    @FXML private Label lblStatus;
     @FXML private ImageView imageViewSource;
     @FXML private ImageView imageViewResultat;
+    
     private ScheduledExecutorService timer;
     private VideoCapture capture = new VideoCapture();
-    // si c'est vrai alors on chiffrera/déchiffrera la vidéo
+    private VideoWriter videoWriter = new VideoWriter();
+    private String videoPath;
+    
+    // Pour stocker la dernière frame lue brute (sans conversion UI)
+    private Mat currentFrame = null;
+    
+    private boolean saveRequested = false;
+    private String savePath = null;
+
     private boolean chiffrement = false;
     private boolean dechiffrement = false;
     private int cleR = 0;
@@ -50,9 +60,6 @@ public class VideoGrabDemoController {
 
 
 
-    /**
-     * Permet d'initialiser les actions des boutons et champs de texte.
-     * */
     @FXML
     public void initialize() {
         if (btnOuvrirFichier != null) {
@@ -63,23 +70,34 @@ public class VideoGrabDemoController {
             parserCle();
             chiffrement = true;
             dechiffrement = false;
-            System.out.println("Mode : Mélanger (Chiffrer) avec R=" + cleR + " S=" + cleS);
+            String msg = "Mode : Mélanger (Chiffrer) avec R=" + cleR + " S=" + cleS;
+            System.out.println(msg);
+            updateStatus(msg);
+            startVideo(videoPath);
         });
 
         btnDemelanger.setOnAction(e -> {
             parserCle();
             chiffrement = false;
             dechiffrement = true;
-            System.out.println("Mode : Démélanger (Déchiffrer) avec R=" + cleR + " S=" + cleS);
+            String msg = "Mode : Démélanger (Déchiffrer) avec R=" + cleR + " S=" + cleS;
+            System.out.println(msg);
+            updateStatus(msg);
+            startVideo(videoPath);
         });
+
+        if (btnTelecharger != null) {
+            btnTelecharger.setOnAction(this::handleDownloadVideo);
+        }
+        
+        if (btnBruteForce != null) {
+            btnBruteForce.setOnAction(this::handleBruteForce);
+        }
+        
+        updateStatus("Prêt. Veuillez ouvrir une vidéo.");
     }
 
 
-    /**
-     * Permet de récupérer les clés R et S depuis les champs de texte dans la vue.
-     * On récupère les clés R et S, on met 0 par défaut si les champs sont vides
-     * puis on renvoie un message dans le terminal en cas d'erreur de format.
-     */
     private void parserCle() {
         try {
             String textR = txtR.getText();
@@ -88,16 +106,11 @@ public class VideoGrabDemoController {
             cleS = textS.isEmpty() ? 0 : Integer.parseInt(textS);
         } catch (NumberFormatException e) {
             System.err.println("Clés invalides. Veuillez entrer des entiers valides pour R et S.");
+            updateStatus("Erreur : Clés R et S invalides (entiers requis).");
         }
     }
 
 
-    /**
-     * @argument event: ActionEvent
-     * ---
-     * Permet de sélectionner une vidéo depuis les fichiers de l'appareil.
-     * Méthode utilisé par le bouton "Ouvrir Vidéo".
-     * */
     private void handleOpenVideo(ActionEvent event) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Sélectionner une vidéo");
@@ -109,19 +122,99 @@ public class VideoGrabDemoController {
         File selectedFile = fileChooser.showOpenDialog(btnOuvrirFichier.getScene().getWindow());
 
         if (selectedFile != null) {
-            startVideo(selectedFile.getAbsolutePath());
+            this.videoPath = selectedFile.getAbsolutePath();
+            updateStatus("Vidéo chargée : " + selectedFile.getName());
+            startVideo(this.videoPath);
         }
     }
 
+    private void handleDownloadVideo(ActionEvent event) {
+        if (this.videoPath == null || this.videoPath.isEmpty()) {
+            updateStatus("Impossible d'enregistrer : aucune vidéo chargée.");
+            System.err.println("Impossible d'enregistrer : aucune vidéo n'est chargée.");
+            return;
+        }
 
-    /**
-     * @argument videoPath: String
-     * ---
-     * Ouvre la lecture de la vidéo et démarre le traitement image par image.
-     * Mélange ou Démélange qui se passe sur une copie de l'image originale.
-     * Si aucun bouton n'est pressé, frameProcessed reste une copie de l'originale.
-     * */
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Enregistrer la vidéo sous...");
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Fichier AVI (MJPG)", "*.avi")
+        );
+        
+        File file = fileChooser.showSaveDialog(btnTelecharger.getScene().getWindow());
+        if (file != null) {
+            this.savePath = file.getAbsolutePath();
+            this.saveRequested = true;
+            updateStatus("Enregistrement demandé vers : " + file.getName() + " (Démarrage...)");
+            startVideo(this.videoPath);
+        }
+    }
+    
+    private void handleBruteForce(ActionEvent event) {
+        if (!capture.isOpened()) {
+            updateStatus("Erreur : Ouvrez une vidéo chiffrée d'abord.");
+            return;
+        }
+
+        // On utilise la frame brute stockée en mémoire au lieu de l'image de l'UI
+        if (this.currentFrame == null || this.currentFrame.empty()) {
+            updateStatus("Erreur : Aucune image en mémoire. Laissez la vidéo tourner un peu.");
+            return;
+        }
+        
+        // On clone pour ne pas être affecté par la lecture vidéo qui continue
+        Mat scrambledImage = this.currentFrame.clone();
+        
+        new Thread(() -> {
+            int bestR = -1;
+            int bestS = -1;
+            double bestScore = Double.MAX_VALUE;
+            
+            Mat tempImage = new Mat(scrambledImage.rows(), scrambledImage.cols(), scrambledImage.type());
+            
+            for (int r = 0; r <= 255; r++) {
+                for (int s = 0; s <= 127; s++) {
+                    VideoScramble.processImageByBlocks(scrambledImage, tempImage, r, s, true);
+                    double score = VideoScramble.calculateScore(tempImage);
+                    
+                    if (score < bestScore) {
+                        bestScore = score;
+                        bestR = r;
+                        bestS = s;
+                        
+                        final int finalR = bestR;
+                        final int finalS = bestS;
+                        
+                        // On clone l'image résultat pour l'affichage (évite les conflits de thread)
+                        final Mat bestImageSoFar = tempImage.clone();
+                        
+                        Platform.runLater(() -> {
+                            txtR.setText(String.valueOf(finalR));
+                            txtS.setText(String.valueOf(finalS));
+                            updateStatus("Recherche... Meilleure clé trouvée : R=" + finalR + ", S=" + finalS);
+                            updateImageView(imageViewResultat, mat2Image(bestImageSoFar));
+                        });
+                    }
+                }
+            }
+            
+            final int finalBestR = bestR;
+            final int finalBestS = bestS;
+            Platform.runLater(() -> {
+                updateStatus("Recherche terminée ! Clé trouvée : R=" + finalBestR + ", S=" + finalBestS);
+                parserCle();
+                dechiffrement = true;
+                chiffrement = false;
+                startVideo(videoPath);
+            });
+        }).start();
+    }
+
+
     public void startVideo(String videoPath) {
+        if (videoPath == null || videoPath.isEmpty()) {
+            return;
+        }
         stopAcquisition();
         this.capture.open(videoPath);
 
@@ -130,6 +223,33 @@ public class VideoGrabDemoController {
                 Mat frame = grabFrame();
 
                 if (!frame.empty()) {
+                    // On sauvegarde la frame courante pour le brute force
+                    this.currentFrame = frame.clone();
+
+                    if (saveRequested && savePath != null) {
+                        if (videoWriter.isOpened()) {
+                            videoWriter.release();
+                        }
+                        double fps = capture.get(5);
+                        if (fps <= 0) fps = 25.0;
+                        
+                        Size frameSize = new Size(frame.width(), frame.height());
+                        int fourcc = VideoWriter.fourcc('M', 'J', 'P', 'G');
+                        
+                        videoWriter.open(savePath, fourcc, fps, frameSize, true);
+                        
+                        if (videoWriter.isOpened()) {
+                            String msg = "Enregistrement EN COURS (" + frame.width() + "x" + frame.height() + ")";
+                            System.out.println(msg);
+                            updateStatus(msg);
+                        } else {
+                            String err = "Erreur : Impossible de créer le fichier vidéo.";
+                            System.err.println(err);
+                            updateStatus(err);
+                        }
+                        saveRequested = false;
+                    }
+
                     Image imageOriginale = mat2Image(frame);
                     updateImageView(imageViewSource, imageOriginale);
 
@@ -141,10 +261,15 @@ public class VideoGrabDemoController {
                         VideoScramble.processImageByBlocks(frame, frameCopie, cleR, cleS, true);
                     }
 
+                    if (videoWriter.isOpened()) {
+                        videoWriter.write(frameCopie);
+                    }
+
                     updateImageView(imageViewResultat, mat2Image(frameCopie));
                 } else {
                     stopAcquisition();
-                    System.out.println("C'est la fin de la vidéo !!!");
+                    System.out.println("Fin de la vidéo.");
+                    updateStatus("Fin de la vidéo (et de l'enregistrement si actif).");
                 }
             };
 
@@ -152,6 +277,7 @@ public class VideoGrabDemoController {
             this.timer.scheduleAtFixedRate(frameGrabber, 0, 33, TimeUnit.MILLISECONDS);
         } else {
             System.err.println("Erreur au niveau de l'ouverture de la vidéo: " + videoPath);
+            updateStatus("Erreur ouverture vidéo.");
         }
     }
 
@@ -184,10 +310,23 @@ public class VideoGrabDemoController {
         if (this.capture.isOpened()) {
             this.capture.release();
         }
+        
+        if (videoWriter.isOpened()) {
+            videoWriter.release();
+            System.out.println("Enregistrement terminé et fichier fermé.");
+        }
     }
 
     private void updateImageView(ImageView view, Image image) {
         onFXThread(view.imageProperty(), image);
+    }
+    
+    private void updateStatus(String text) {
+        Platform.runLater(() -> {
+            if (lblStatus != null) {
+                lblStatus.setText(text);
+            }
+        });
     }
 
     protected void setClosed() {
@@ -201,6 +340,17 @@ public class VideoGrabDemoController {
             System.err.println("Cannot convert the Mat obejct: " + e);
             return null;
         }
+    }
+    
+    // Cette méthode n'est plus utilisée car on utilise currentFrame directement
+    private Mat imageToMat(Image image) {
+        BufferedImage bImage = SwingFXUtils.fromFXImage(image, null);
+        BufferedImage convertedImg = new BufferedImage(bImage.getWidth(), bImage.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
+        convertedImg.getGraphics().drawImage(bImage, 0, 0, null);
+        Mat mat = new Mat(convertedImg.getHeight(), convertedImg.getWidth(), 16);
+        byte[] data = ((DataBufferByte) convertedImg.getRaster().getDataBuffer()).getData();
+        mat.put(0, 0, data);
+        return mat;
     }
 
     private static BufferedImage matToBufferedImage(Mat original) {
